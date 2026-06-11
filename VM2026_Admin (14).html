@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VM 2026 – Tippeligaen</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1f1f1f;
+    --border: #2a2a2a;
+    --accent: #e8383d;
+    --gold: #f5a623;
+    --green: #27ae60;
+    --text: #e8e8e8;
+    --muted: #666;
+    --nrk: #003f8a;
+    --tv2: #cc0000;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #0d0d0d 0%, #1a0608 50%, #0d0d0d 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 24px 32px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 3px;
+    color: var(--text);
+    line-height: 1;
+  }
+  header h1 span { color: var(--accent); }
+  .header-ball { font-size: 2rem; }
+
+  /* ── Nav tabs ── */
+  nav {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    overflow-x: auto;
+  }
+  nav button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 14px 18px;
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition: all .2s;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  nav button:hover { color: var(--text); }
+  nav button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── Main layout ── */
+  main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── Upload zone ── */
+  #upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 48px 32px;
+    text-align: center;
+    transition: all .2s;
+    cursor: pointer;
+    margin-bottom: 24px;
+    background: var(--surface);
+  }
+  #upload-zone:hover, #upload-zone.drag { border-color: var(--accent); background: #1a0608; }
+  #upload-zone h2 { font-family: 'Bebas Neue'; font-size: 1.6rem; letter-spacing: 2px; margin-bottom: 8px; }
+  #upload-zone p { color: var(--muted); font-size: 13px; margin: 4px 0; }
+  #upload-zone input { display: none; }
+  .upload-btn {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 6px;
+    margin-top: 16px;
+    cursor: pointer;
+    font-size: 14px;
+    letter-spacing: .5px;
+  }
+
+  /* ── Player pills ── */
+  #players-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .player-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .player-pill .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .player-pill .remove {
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 16px; line-height: 1;
+    padding: 0 0 0 4px;
+  }
+  .player-pill .remove:hover { color: var(--accent); }
+
+  /* ── Leaderboard ── */
+  .leaderboard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .leaderboard-header {
+    background: linear-gradient(90deg, #1a0608, var(--surface));
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .leaderboard-header h2 {
+    font-family: 'Bebas Neue';
+    letter-spacing: 2px;
+    font-size: 1.3rem;
+  }
+  .lb-row {
+    display: grid;
+    grid-template-columns: 44px 1fr repeat(4, 64px);
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-row:hover { background: var(--surface2); }
+  .lb-row.rank-1 { background: linear-gradient(90deg, rgba(245,166,35,.08), transparent); }
+  .lb-row.rank-2 { background: linear-gradient(90deg, rgba(192,192,192,.06), transparent); }
+  .lb-row.rank-3 { background: linear-gradient(90deg, rgba(205,127,50,.06), transparent); }
+  .rank-badge {
+    font-family: 'Bebas Neue';
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+  }
+  .rank-1 .rank-badge { color: var(--gold); }
+  .rank-2 .rank-badge { color: #c0c0c0; }
+  .rank-3 .rank-badge { color: #cd7f32; }
+  .lb-name { font-weight: 600; font-size: 15px; }
+  .lb-pts {
+    text-align: center;
+    font-family: 'Bebas Neue';
+    font-size: 1.5rem;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .lb-sub { text-align: center; color: var(--muted); font-size: 12px; }
+
+  /* ── Tabs content ── */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Section header ── */
+  .section-title {
+    font-family: 'Bebas Neue';
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin: 24px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Match table ── */
+  .match-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 3px;
+    margin-bottom: 8px;
+  }
+  .match-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--muted);
+    padding: 8px 10px;
+  }
+  .match-table th.center { text-align: center; }
+  .match-table tr.match-row {
+    background: var(--surface);
+    transition: background .15s;
+  }
+  .match-table tr.match-row:hover { background: var(--surface2); }
+  .match-table td {
+    padding: 10px 10px;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .match-table td:first-child { border-left: 1px solid var(--border); border-radius: 6px 0 0 6px; }
+  .match-table td:last-child  { border-right: 1px solid var(--border); border-radius: 0 6px 6px 0; }
+
+  .match-num { color: var(--muted); font-size: 11px; width: 28px; }
+  .team-name { font-weight: 500; }
+  .score-cell {
+    text-align: center;
+    font-family: 'Bebas Neue';
+    font-size: 1.15rem;
+    letter-spacing: 1px;
+    min-width: 36px;
+  }
+  .score-actual { color: var(--green); }
+  .score-separator { color: var(--muted); font-size: 12px; padding: 0 2px; }
+  .meta-cell { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .tv-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .5px;
+  }
+  .tv-nrk { background: var(--nrk); color: white; }
+  .tv-tv2 { background: var(--tv2); color: white; }
+
+  /* ── Player score chips in match row ── */
+  .player-scores { display: flex; gap: 4px; flex-wrap: wrap; }
+  .pscore {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    color: var(--muted);
+  }
+  .pscore.pts-3 { background: rgba(39,174,96,.15); border-color: var(--green); color: var(--green); }
+  .pscore.pts-1 { background: rgba(245,166,35,.12); border-color: var(--gold); color: var(--gold); }
+  .pscore.pts-0 { background: rgba(232,56,61,.1); border-color: #3a1a1a; color: #884; }
+  .pscore.no-actual { opacity: .5; }
+
+  /* ── Group standings ── */
+  .groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .group-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .group-card-header {
+    background: var(--surface2);
+    padding: 10px 16px;
+    font-family: 'Bebas Neue';
+    letter-spacing: 2px;
+    font-size: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .group-card-header span { color: var(--muted); font-size: 11px; font-family: 'DM Sans'; letter-spacing: 0; }
+  .standing-row {
+    display: grid;
+    grid-template-columns: 20px 1fr 28px 28px 28px 28px 28px 28px 36px;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .standing-row:last-child { border-bottom: none; }
+  .standing-row.qualified-1 { background: rgba(39,174,96,.08); border-left: 3px solid var(--green); padding-left: 9px; }
+  .standing-row.qualified-2 { background: rgba(245,166,35,.06); border-left: 3px solid var(--gold); padding-left: 9px; }
+  .standing-row .pos { color: var(--muted); font-size: 11px; }
+  .standing-row .sname { font-weight: 500; }
+  .standing-row .snum { text-align: center; color: var(--muted); }
+  .standing-row .spts { text-align: center; font-weight: 700; color: var(--text); }
+  .standing-hdr {
+    display: grid;
+    grid-template-columns: 20px 1fr 28px 28px 28px 28px 28px 28px 36px;
+    gap: 2px;
+    padding: 6px 12px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .standing-hdr div { text-align: center; }
+  .standing-hdr div:nth-child(2) { text-align: left; }
+
+  /* ── Enter actual results ── */
+  .actual-input-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .actual-input-area h3 {
+    font-family: 'Bebas Neue';
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    color: var(--gold);
+  }
+  .result-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .result-input-row:last-child { border-bottom: none; }
+  .result-input-row label { flex: 1; min-width: 200px; font-size: 13px; }
+  .score-inputs { display: flex; align-items: center; gap: 6px; }
+  .score-inputs input {
+    width: 44px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Bebas Neue';
+    font-size: 1.2rem;
+    text-align: center;
+    padding: 6px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .score-inputs input:focus { border-color: var(--accent); }
+  .score-inputs span { color: var(--muted); }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .emoji { font-size: 3rem; margin-bottom: 16px; }
+  .empty-state h3 { font-family: 'Bebas Neue'; font-size: 1.4rem; letter-spacing: 2px; margin-bottom: 8px; color: var(--text); }
+
+
+  /* ── Graph ── */
+  .graph-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .graph-wrap h2 {
+    font-family: 'Bebas Neue';
+    letter-spacing: 2px;
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+  }
+  .graph-wrap p {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+  .graph-svg-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .graph-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .graph-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .graph-legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+
+  /* ── Summary ── */
+  .summary-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .summary-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .summary-controls h2 {
+    font-family: 'Bebas Neue';
+    letter-spacing: 2px;
+    font-size: 1.4rem;
+    flex: 1;
+  }
+  .summary-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: opacity .2s;
+  }
+  .summary-btn:hover { opacity: .85; }
+  .summary-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .summary-btn.secondary {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .summary-meta {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .summary-output {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    line-height: 1.8;
+    font-size: 14px;
+    color: var(--text);
+    white-space: pre-wrap;
+    min-height: 120px;
+  }
+  .summary-output.loading {
+    color: var(--muted);
+    font-style: italic;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .summary-output .emoji-header {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--gold);
+    display: block;
+    margin: 12px 0 4px;
+  }
+  .summary-saved {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 16px;
+  }
+  .summary-saved h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .summary-history-item {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .summary-history-item:last-child { border-bottom: none; }
+  .summary-history-item:hover { color: var(--gold); }
+  .summary-history-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .apikey-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .apikey-row input {
+    flex: 1;
+    min-width: 200px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+    padding: 7px 12px;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .apikey-row input:focus { border-color: var(--accent); }
+  .apikey-row label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  /* ── Utility ── */
+  .flex { display: flex; }
+  .gap-8 { gap: 8px; }
+  .norge-highlight { background: rgba(245,166,35,.06) !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="header-ball">⚽</span>
+  <div>
+    <h1>VM <span>2026</span></h1>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+    <span style="color:var(--muted);font-size:12px;">TIPPING ADMIN</span>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('dashboard',this)">Ledertavle</button>
+  <button onclick="showTab('results',this)">Kampresultater</button>
+  <button onclick="showTab('standings',this)">Gruppetabeller</button>
+  <button onclick="showTab('details',this)">Tips per kamp</button>
+  <button onclick="showTab('graph',this)">📈 Poengutvikling</button>
+  <button onclick="showTab('summary',this)">📰 Oppsummering</button>
+</nav>
+
+<main>
+
+<!-- ── Upload ── -->
+<div id="upload-zone" onclick="document.getElementById('file-input').click()"
+     ondragover="event.preventDefault();this.classList.add('drag')"
+     ondragleave="this.classList.remove('drag')"
+     ondrop="handleDrop(event)">
+  <h2>📂 Last inn tips-filer</h2>
+  <p>Velg eller dra inn vennenes <strong>VM2026_MineTips.xlsx</strong> filer</p>
+  <p style="font-size:11px;margin-top:4px;">Laster inn alle spillere automatisk. Alle filer leses lokalt – ingen data sendes noe sted.</p>
+  <label class="upload-btn" onclick="event.stopPropagation();document.getElementById('file-input').click()">
+    Velg filer
+  </label>
+  <input type="file" id="file-input" multiple accept=".xlsx" onchange="handleFiles(this.files)">
+</div>
+
+
+<!-- ── Sync panel ── -->
+<div id="sync-panel" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:20px;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+    <span style="font-size:1.2rem">🔄</span>
+    <h3 style="font-family:'Bebas Neue';letter-spacing:2px;font-size:1.1rem">Auto-hent kampresultater</h3>
+    <span style="margin-left:auto;color:var(--muted);font-size:11px">openfootball · GitHub</span>
+  </div>
+  <p style="color:var(--muted);font-size:12px;margin-bottom:14px;">
+    Henter resultater fra open-source VM-databasen på GitHub. Oppdateres automatisk etter hvert kamp.
+  </p>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <button onclick="syncResults()" id="sync-btn"
+      style="background:var(--green);color:white;border:none;border-radius:6px;padding:9px 22px;font-weight:600;font-size:13px;cursor:pointer;letter-spacing:.3px;">
+      ↓ Hent resultater
+    </button>
+    <div id="sync-status" class="sync-status" style="font-size:13px;"></div>
+  </div>
+</div>
+
+
+
+<!-- ── Save/Load panel ── -->
+<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+  <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px;">
+    <span style="font-size:1.1rem">💾</span>
+    <div>
+      <div style="font-family:'Bebas Neue';letter-spacing:1.5px;font-size:1rem;">Lagre / Last inn data</div>
+      <div style="color:var(--muted);font-size:11px;">Tips og resultater lagres automatisk i nettleseren. Bruk eksport/import for å ta sikkerhetskopi eller flytte data til en annen enhet.</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button onclick="exportData()"
+      style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 16px;font-weight:600;font-size:13px;cursor:pointer;">
+      ⬆ Eksporter backup
+    </button>
+    <label style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 16px;font-weight:600;font-size:13px;cursor:pointer;">
+      ⬇ Importer backup
+      <input type="file" accept=".json" onchange="importData(this)" style="display:none">
+    </label>
+    <button onclick="clearAllData()"
+      style="background:rgba(232,56,61,.1);border:1px solid rgba(232,56,61,.3);color:var(--accent);border-radius:6px;padding:8px 16px;font-weight:600;font-size:13px;cursor:pointer;">
+      🗑 Nullstill alt
+    </button>
+  </div>
+  <div id="save-status" style="width:100%;font-size:12px;color:var(--green);display:none;"></div>
+</div>
+
+<div id="players-bar"></div>
+
+<!-- ── Dashboard tab ── -->
+<div id="tab-dashboard" class="tab-content active">
+  <div class="leaderboard" id="leaderboard">
+    <div class="leaderboard-header">
+      <span style="font-size:1.3rem">🏆</span>
+      <h2>Ledertavle</h2>
+    </div>
+    <div class="empty-state">
+      <div class="emoji">👆</div>
+      <h3>Last inn tips-filer</h3>
+      <p>Dra inn xlsx-filene fra vennene dine ovenfor</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Results tab ── -->
+<div id="tab-results" class="tab-content">
+  <div class="actual-input-area">
+    <h3>📋 Skriv inn faktiske kampresultater</h3>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px;">Resultatene lagres i nettleseren og brukes til å beregne poeng. De vil bli der neste gang du åpner siden.</p>
+    <div id="result-inputs"></div>
+  </div>
+</div>
+
+<!-- ── Standings tab ── -->
+<div id="tab-standings" class="tab-content">
+  <div id="groups-container" class="groups-grid"></div>
+</div>
+
+<!-- ── Graph tab ── -->
+<div id="tab-graph" class="tab-content">
+  <div id="graph-container"></div>
+</div>
+
+<!-- ── Details tab ── -->
+<div id="tab-details" class="tab-content">
+  <div id="details-container"></div>
+</div>
+
+<!-- ── Summary tab ── -->
+<div id="tab-summary" class="tab-content">
+  <div id="summary-container"></div>
+</div>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── Match data (embedded) ──────────────────────────────────────────
+const GROUP_MATCHES = [{"num": 1, "group": "A", "home": "Mexico", "away": "Sør-Afrika", "date": "11. jun", "time": "21:00", "venue": "Mexico City", "tv": "TV2"}, {"num": 2, "group": "A", "home": "Sør-Korea", "away": "Tsjekkia", "date": "12. jun", "time": "04:00", "venue": "Guadalajara", "tv": "NRK"}, {"num": 3, "group": "A", "home": "Tsjekkia", "away": "Sør-Afrika", "date": "18. jun", "time": "18:00", "venue": "Atlanta", "tv": "NRK"}, {"num": 4, "group": "A", "home": "Mexico", "away": "Sør-Korea", "date": "19. jun", "time": "03:00", "venue": "Guadalajara", "tv": "TV2"}, {"num": 5, "group": "A", "home": "Mexico", "away": "Tsjekkia", "date": "25. jun", "time": "03:00", "venue": "Mexico City", "tv": "TV2"}, {"num": 6, "group": "A", "home": "Sør-Afrika", "away": "Sør-Korea", "date": "25. jun", "time": "03:00", "venue": "Monterrey", "tv": "TV2"}, {"num": 7, "group": "B", "home": "Canada", "away": "Bosnia-Hercegovina", "date": "12. jun", "time": "21:00", "venue": "Toronto", "tv": "NRK"}, {"num": 8, "group": "B", "home": "Qatar", "away": "Sveits", "date": "13. jun", "time": "21:00", "venue": "San Francisco", "tv": "NRK"}, {"num": 9, "group": "B", "home": "Sveits", "away": "Bosnia-Hercegovina", "date": "18. jun", "time": "21:00", "venue": "Los Angeles", "tv": "TV2"}, {"num": 10, "group": "B", "home": "Canada", "away": "Qatar", "date": "19. jun", "time": "00:00", "venue": "Vancouver", "tv": "TV2"}, {"num": 11, "group": "B", "home": "Sveits", "away": "Canada", "date": "24. jun", "time": "21:00", "venue": "Vancouver", "tv": "NRK"}, {"num": 12, "group": "B", "home": "Bosnia-Hercegovina", "away": "Qatar", "date": "24. jun", "time": "21:00", "venue": "Seattle", "tv": "NRK"}, {"num": 13, "group": "C", "home": "Brasil", "away": "Marokko", "date": "14. jun", "time": "00:00", "venue": "New York", "tv": "TV2"}, {"num": 14, "group": "C", "home": "Haiti", "away": "Skottland", "date": "14. jun", "time": "03:00", "venue": "Boston", "tv": "TV2"}, {"num": 15, "group": "C", "home": "Skottland", "away": "Marokko", "date": "20. jun", "time": "00:00", "venue": "Boston", "tv": "NRK"}, {"num": 16, "group": "C", "home": "Brasil", "away": "Haiti", "date": "20. jun", "time": "03:00", "venue": "Philadelphia", "tv": "NRK"}, {"num": 17, "group": "C", "home": "Skottland", "away": "Brasil", "date": "25. jun", "time": "00:00", "venue": "Miami", "tv": "NRK"}, {"num": 18, "group": "C", "home": "Marokko", "away": "Haiti", "date": "25. jun", "time": "00:00", "venue": "Atlanta", "tv": "NRK"}, {"num": 19, "group": "D", "home": "USA", "away": "Paraguay", "date": "13. jun", "time": "03:00", "venue": "Los Angeles", "tv": "TV2"}, {"num": 20, "group": "D", "home": "Australia", "away": "Tyrkia", "date": "14. jun", "time": "06:00", "venue": "Vancouver", "tv": "TV2"}, {"num": 21, "group": "D", "home": "USA", "away": "Australia", "date": "19. jun", "time": "21:00", "venue": "Seattle", "tv": "NRK"}, {"num": 22, "group": "D", "home": "Tyrkia", "away": "Paraguay", "date": "20. jun", "time": "06:00", "venue": "San Francisco", "tv": "NRK"}, {"num": 23, "group": "D", "home": "Tyrkia", "away": "USA", "date": "26. jun", "time": "04:00", "venue": "Los Angeles", "tv": "NRK"}, {"num": 24, "group": "D", "home": "Paraguay", "away": "Australia", "date": "26. jun", "time": "04:00", "venue": "San Francisco", "tv": "NRK"}, {"num": 25, "group": "E", "home": "Tyskland", "away": "Curaçao", "date": "14. jun", "time": "19:00", "venue": "Houston", "tv": "NRK"}, {"num": 26, "group": "E", "home": "Elfenbenskysten", "away": "Ecuador", "date": "15. jun", "time": "01:00", "venue": "Philadelphia", "tv": "TV2"}, {"num": 27, "group": "E", "home": "Tyskland", "away": "Elfenbenskysten", "date": "20. jun", "time": "22:00", "venue": "Toronto", "tv": "TV2"}, {"num": 28, "group": "E", "home": "Ecuador", "away": "Curaçao", "date": "21. jun", "time": "02:00", "venue": "Kansas City", "tv": "TV2"}, {"num": 29, "group": "E", "home": "Curaçao", "away": "Elfenbenskysten", "date": "25. jun", "time": "22:00", "venue": "Philadelphia", "tv": "TV2"}, {"num": 30, "group": "E", "home": "Ecuador", "away": "Tyskland", "date": "25. jun", "time": "22:00", "venue": "New York", "tv": "TV2"}, {"num": 31, "group": "F", "home": "Nederland", "away": "Japan", "date": "14. jun", "time": "22:00", "venue": "Dallas", "tv": "TV2"}, {"num": 32, "group": "F", "home": "Sverige", "away": "Tunisia", "date": "15. jun", "time": "04:00", "venue": "Monterrey", "tv": "TV2"}, {"num": 33, "group": "F", "home": "Nederland", "away": "Sverige", "date": "20. jun", "time": "19:00", "venue": "Houston", "tv": "NRK"}, {"num": 34, "group": "F", "home": "Tunisia", "away": "Japan", "date": "21. jun", "time": "06:00", "venue": "Monterrey", "tv": "NRK"}, {"num": 35, "group": "F", "home": "Tunisia", "away": "Nederland", "date": "26. jun", "time": "01:00", "venue": "Kansas City", "tv": "TV2"}, {"num": 36, "group": "F", "home": "Japan", "away": "Sverige", "date": "26. jun", "time": "01:00", "venue": "Dallas", "tv": "TV2"}, {"num": 37, "group": "G", "home": "Belgia", "away": "Egypt", "date": "15. jun", "time": "21:00", "venue": "Seattle", "tv": "NRK"}, {"num": 38, "group": "G", "home": "Iran", "away": "New Zealand", "date": "16. jun", "time": "03:00", "venue": "Los Angeles", "tv": "NRK"}, {"num": 39, "group": "G", "home": "Belgia", "away": "Iran", "date": "21. jun", "time": "21:00", "venue": "Los Angeles", "tv": "TV2"}, {"num": 40, "group": "G", "home": "New Zealand", "away": "Egypt", "date": "22. jun", "time": "03:00", "venue": "Vancouver", "tv": "TV2"}, {"num": 41, "group": "G", "home": "Egypt", "away": "Iran", "date": "27. jun", "time": "05:00", "venue": "Seattle", "tv": "TV2"}, {"num": 42, "group": "G", "home": "New Zealand", "away": "Belgia", "date": "27. jun", "time": "05:00", "venue": "Vancouver", "tv": "TV2"}, {"num": 43, "group": "H", "home": "Spania", "away": "Kapp Verde", "date": "15. jun", "time": "18:00", "venue": "Atlanta", "tv": "TV2"}, {"num": 44, "group": "H", "home": "Saudi Arabia", "away": "Uruguay", "date": "16. jun", "time": "00:00", "venue": "Miami", "tv": "NRK"}, {"num": 45, "group": "H", "home": "Spania", "away": "Saudi Arabia", "date": "21. jun", "time": "18:00", "venue": "Atlanta", "tv": "NRK"}, {"num": 46, "group": "H", "home": "Uruguay", "away": "Kapp Verde", "date": "22. jun", "time": "00:00", "venue": "Miami", "tv": "TV2"}, {"num": 47, "group": "H", "home": "Kapp Verde", "away": "Saudi Arabia", "date": "27. jun", "time": "02:00", "venue": "Houston", "tv": "NRK"}, {"num": 48, "group": "H", "home": "Uruguay", "away": "Spania", "date": "27. jun", "time": "02:00", "venue": "Guadalajara", "tv": "NRK"}, {"num": 49, "group": "I", "home": "Frankrike", "away": "Senegal", "date": "16. jun", "time": "21:00", "venue": "New York", "tv": "TV2"}, {"num": 50, "group": "I", "home": "Irak", "away": "Norge", "date": "17. jun", "time": "00:00", "venue": "Boston", "tv": "TV2"}, {"num": 51, "group": "I", "home": "Frankrike", "away": "Irak", "date": "22. jun", "time": "23:00", "venue": "Philadelphia", "tv": "NRK"}, {"num": 52, "group": "I", "home": "Norge", "away": "Senegal", "date": "23. jun", "time": "02:00", "venue": "New York", "tv": "NRK"}, {"num": 53, "group": "I", "home": "Norge", "away": "Frankrike", "date": "26. jun", "time": "21:00", "venue": "Boston", "tv": "NRK"}, {"num": 54, "group": "I", "home": "Senegal", "away": "Irak", "date": "26. jun", "time": "21:00", "venue": "Toronto", "tv": "NRK"}, {"num": 55, "group": "J", "home": "Argentina", "away": "Algerie", "date": "16. jun", "time": "21:00", "venue": "Kansas City", "tv": "NRK"}, {"num": 56, "group": "J", "home": "Østerrike", "away": "Jordan", "date": "17. jun", "time": "06:00", "venue": "San Francisco", "tv": "NRK"}, {"num": 57, "group": "J", "home": "Argentina", "away": "Østerrike", "date": "22. jun", "time": "19:00", "venue": "Dallas", "tv": "TV2"}, {"num": 58, "group": "J", "home": "Jordan", "away": "Algerie", "date": "23. jun", "time": "05:00", "venue": "San Francisco", "tv": "TV2"}, {"num": 59, "group": "J", "home": "Jordan", "away": "Argentina", "date": "27. jun", "time": "22:00", "venue": "Dallas", "tv": "NRK"}, {"num": 60, "group": "J", "home": "Algerie", "away": "Østerrike", "date": "27. jun", "time": "22:00", "venue": "Kansas City", "tv": "NRK"}, {"num": 61, "group": "K", "home": "Portugal", "away": "DR Kongo", "date": "17. jun", "time": "19:00", "venue": "Houston", "tv": "NRK"}, {"num": 62, "group": "K", "home": "Usbekistan", "away": "Colombia", "date": "18. jun", "time": "04:00", "venue": "Mexico City", "tv": "TV2"}, {"num": 63, "group": "K", "home": "Portugal", "away": "Usbekistan", "date": "23. jun", "time": "19:00", "venue": "Houston", "tv": "TV2"}, {"num": 64, "group": "K", "home": "Colombia", "away": "DR Kongo", "date": "24. jun", "time": "04:00", "venue": "Guadalajara", "tv": "TV2"}, {"num": 65, "group": "K", "home": "Colombia", "away": "Portugal", "date": "27. jun", "time": "19:30", "venue": "Miami", "tv": "NRK"}, {"num": 66, "group": "K", "home": "DR Kongo", "away": "Usbekistan", "date": "27. jun", "time": "19:30", "venue": "Atlanta", "tv": "NRK"}, {"num": 67, "group": "L", "home": "England", "away": "Kroatia", "date": "17. jun", "time": "22:00", "venue": "Dallas", "tv": "TV2"}, {"num": 68, "group": "L", "home": "Ghana", "away": "Panama", "date": "18. jun", "time": "01:00", "venue": "Toronto", "tv": "TV2"}, {"num": 69, "group": "L", "home": "England", "away": "Ghana", "date": "23. jun", "time": "22:00", "venue": "Boston", "tv": "NRK"}, {"num": 70, "group": "L", "home": "Panama", "away": "Kroatia", "date": "24. jun", "time": "01:00", "venue": "Toronto", "tv": "NRK"}, {"num": 71, "group": "L", "home": "Panama", "away": "England", "date": "27. jun", "time": "23:00", "venue": "New York", "tv": "TV2"}, {"num": 72, "group": "L", "home": "Kroatia", "away": "Ghana", "date": "27. jun", "time": "23:00", "venue": "Philadelphia", "tv": "TV2"}];
+const KO_MATCHES = [{"num": 1, "round": "16-delsfinale", "date": "28. jun", "time": "21:00", "venue": "Los Angeles", "tv": "TV2"}, {"num": 2, "round": "16-delsfinale", "date": "29. jun", "time": "19:00", "venue": "Houston", "tv": "TV2"}, {"num": 3, "round": "16-delsfinale", "date": "29. jun", "time": "22:30", "venue": "Boston", "tv": "TV2"}, {"num": 4, "round": "16-delsfinale", "date": "30. jun", "time": "03:00", "venue": "Monterrey", "tv": "TV2"}, {"num": 5, "round": "16-delsfinale", "date": "30. jun", "time": "19:00", "venue": "Dallas", "tv": "TV2"}, {"num": 6, "round": "16-delsfinale", "date": "30. jun", "time": "23:00", "venue": "New York", "tv": "TV2"}, {"num": 7, "round": "16-delsfinale", "date": "01. jul", "time": "03:00", "venue": "Mexico City", "tv": "TV2"}, {"num": 8, "round": "16-delsfinale", "date": "01. jul", "time": "18:00", "venue": "Atlanta", "tv": "TV2"}, {"num": 9, "round": "16-delsfinale", "date": "01. jul", "time": "22:00", "venue": "Seattle", "tv": "TV2"}, {"num": 10, "round": "16-delsfinale", "date": "02. jul", "time": "02:00", "venue": "San Francisco", "tv": "TV2"}, {"num": 11, "round": "16-delsfinale", "date": "02. jul", "time": "21:00", "venue": "Los Angeles", "tv": "TV2"}, {"num": 12, "round": "16-delsfinale", "date": "03. jul", "time": "01:00", "venue": "Toronto", "tv": "TV2"}, {"num": 13, "round": "16-delsfinale", "date": "03. jul", "time": "05:00", "venue": "Vancouver", "tv": "TV2"}, {"num": 14, "round": "16-delsfinale", "date": "03. jul", "time": "20:00", "venue": "Dallas", "tv": "TV2"}, {"num": 15, "round": "16-delsfinale", "date": "04. jul", "time": "00:00", "venue": "Miami", "tv": "TV2"}, {"num": 16, "round": "16-delsfinale", "date": "04. jul", "time": "03:30", "venue": "Kansas City", "tv": "TV2"}, {"num": 17, "round": "Åttedelsfinale", "date": "04. jul", "time": "18:00", "venue": "Philadelphia", "tv": "NRK"}, {"num": 18, "round": "Åttedelsfinale", "date": "04. jul", "time": "22:00", "venue": "New York", "tv": "NRK"}, {"num": 19, "round": "Åttedelsfinale", "date": "05. jul", "time": "18:00", "venue": "Seattle", "tv": "NRK"}, {"num": 20, "round": "Åttedelsfinale", "date": "05. jul", "time": "22:00", "venue": "Houston", "tv": "NRK"}, {"num": 21, "round": "Åttedelsfinale", "date": "06. jul", "time": "18:00", "venue": "Dallas", "tv": "NRK"}, {"num": 22, "round": "Åttedelsfinale", "date": "06. jul", "time": "22:00", "venue": "Atlanta", "tv": "NRK"}, {"num": 23, "round": "Åttedelsfinale", "date": "07. jul", "time": "18:00", "venue": "Atlanta", "tv": "NRK"}, {"num": 24, "round": "Åttedelsfinale", "date": "07. jul", "time": "22:00", "venue": "Vancouver", "tv": "NRK"}, {"num": 25, "round": "Kvartfinale", "date": "09. jul", "time": "22:00", "venue": "Boston", "tv": "TV2"}, {"num": 26, "round": "Kvartfinale", "date": "10. jul", "time": "21:00", "venue": "Los Angeles", "tv": "TV2"}, {"num": 27, "round": "Kvartfinale", "date": "11. jul", "time": "23:00", "venue": "Miami", "tv": "TV2"}, {"num": 28, "round": "Kvartfinale", "date": "12. jul", "time": "03:00", "venue": "Kansas City", "tv": "TV2"}, {"num": 29, "round": "Semifinale", "date": "14. jul", "time": "21:00", "venue": "Dallas", "tv": "TV2"}, {"num": 30, "round": "Semifinale", "date": "15. jul", "time": "21:00", "venue": "Atlanta", "tv": "TV2"}, {"num": 31, "round": "Bronsefinale", "date": "18. jul", "time": "23:00", "venue": "Miami", "tv": "NRK"}, {"num": 32, "round": "Finale", "date": "19. jul", "time": "21:00", "venue": "New York", "tv": "NRK"}];
+const R32_PAIRS = [["A", 1, "B", 2], ["C", 1, "D", 2], ["E", 1, "F", 2], ["G", 1, "H", 2], ["I", 1, "J", 2], ["K", 1, "L", 2], ["A", 2, "B", 1], ["C", 2, "D", 1], ["E", 2, "F", 1], ["G", 2, "H", 1], ["I", 2, "J", 1], ["K", 2, "L", 1], ["A", 1, "C", 2], ["B", 1, "D", 2], ["E", 1, "G", 2], ["F", 1, "H", 2]];
+const GROUPS = {};
+
+GROUP_MATCHES.forEach(m => {
+  if (!GROUPS[m.group]) GROUPS[m.group] = [];
+  if (!GROUPS[m.group].includes(m.home)) GROUPS[m.group].push(m.home);
+  if (!GROUPS[m.group].includes(m.away)) GROUPS[m.group].push(m.away);
+});
+
+// R32 pairings: [groupA, rankA, groupB, rankB]
+const R16_PAIRS = [[1,2],[3,4],[5,6],[7,8],[9,10],[11,12],[13,14],[15,16]];
+const QF_PAIRS  = [[17,18],[19,20],[21,22],[23,24]];
+const SF_PAIRS  = [[25,26],[27,28]];
+
+// ── Player colors ──────────────────────────────────────────────────
+const COLORS = [
+  '#e8383d','#f5a623','#27ae60','#3498db','#9b59b6',
+  '#1abc9c','#e67e22','#e91e63','#00bcd4','#8bc34a',
+  '#ff5722','#607d8b','#795548','#ff9800','#2196f3',
+  '#9c27b0','#4caf50','#f44336','#009688','#ffc107'
+];
+
+// ── State ─────────────────────────────────────────────────────────
+let players = [];   // {name, color, tips: {matchKey: [hm,bm]}}
+let actuals = JSON.parse(localStorage.getItem('vm2026_actuals') || '{}');
+
+// ── Tab switching ──────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'standings') renderStandings();
+  if (id === 'details') renderDetails();
+  if (id === 'dashboard') renderLeaderboard();
+  if (id === 'results') renderResultInputs();
+  if (id === 'graph') renderGraph();
+  if (id === 'summary') renderSummary();
+}
+
+// ── File handling ──────────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  handleFiles(e.dataTransfer.files);
+}
+
+function handleFiles(files) {
+  Array.from(files).forEach(f => {
+    if (!f.name.endsWith('.xlsx')) return;
+    const reader = new FileReader();
+    reader.onload = e => parseXlsx(e.target.result, f.name);
+    reader.readAsArrayBuffer(f);
+  });
+}
+
+function parseXlsx(buffer, filename) {
+  try {
+    const wb = XLSX.read(buffer, {type: 'array', cellFormula: false});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+    // Name from row index 1 (row 2), col index 3 (D)
+    let name = String(rows[1]?.[3] || '').trim();
+    if (!name || name === '0') name = filename.replace(/\.xlsx?$/i,'');
+
+    const tips   = {};   // group stage: { "Home|Away": [hm, bm] }
+    const koTips = { r1:[], r2:[], r3:[], r4:[], r5:[] };  // KO: checked team names
+
+    // KO section row ranges (1-based Excel rows → 0-based array indices)
+    const KO = {
+      r1: { start:105, end:136 },  // Excel 106-137
+      r2: { start:139, end:154 },  // Excel 140-155
+      r3: { start:157, end:164 },  // Excel 158-165
+      r4: { start:167, end:170 },  // Excel 168-171
+      r5: { start:173, end:174 },  // Excel 174-175
+    };
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+
+      // ── Group stage (rows 7-100 = index 6-99) ────────────────
+      if (i >= 6 && i <= 99) {
+        const num  = row[0];
+        const grp  = String(row[1] || '');
+        const home = String(row[2] || '').trim();
+        const away = String(row[6] || '').trim();
+        const hm   = row[3];
+        const bm   = row[5];
+        if (!home || !away || !grp.match(/^[A-L]$/)) continue;
+        if (hm !== '' && hm !== null && bm !== '' && bm !== null) {
+          tips[home + '|' + away] = [Number(hm), Number(bm)];
+        }
+        continue;
+      }
+
+      // ── KO sections ───────────────────────────────────────────
+      for (const [round, range] of Object.entries(KO)) {
+        if (i >= range.start && i <= range.end) {
+          const checked  = row[0];  // col A = TRUE/FALSE checkbox
+          const teamName = String(row[1] || '').trim();  // col B = team name
+          if ((checked === true || checked === 'TRUE' || checked === 1)
+              && teamName && teamName !== 'FALSE' && teamName !== '0') {
+            koTips[round].push(teamName);
+          }
+          break;
+        }
+      }
+    }
+
+    const existing = players.findIndex(p => p.name === name);
+    if (existing >= 0) {
+      players[existing].tips   = tips;
+      players[existing].koTips = koTips;
+    } else {
+      players.push({
+        name, color: COLORS[players.length % COLORS.length],
+        tips, koTips
+      });
+    }
+
+    renderAll();
+  } catch(err) {
+    console.error('Parse error:', err);
+    alert('Kunne ikke lese filen: ' + filename + '\n' + err.message);
+  }
+}
+
+// ── Core scoring ───────────────────────────────────────────────────
+function matchKey(home, away) { return home + '|' + away; }
+
+function getActual(home, away) {
+  const k = matchKey(home, away);
+  return actuals[k] || null;  // [hm, bm] or null
+}
+
+function calcPoints(tip, actual) {
+  if (!tip || !actual) return null;
+  const [th, ta] = tip;
+  const [ah, aa] = actual;
+  if (th === ah && ta === aa) return 3;
+  const tipRes   = th > ta ? 'H' : th < ta ? 'A' : 'D';
+  const actRes   = ah > aa ? 'H' : ah < aa ? 'A' : 'D';
+  return tipRes === actRes ? 1 : 0;
+}
+
+// KO round config: key, points per correct pick, actuals key
+const KO_ROUNDS_CFG = [
+  { key:'r1', pts:1, label:'16-delsfinale' },
+  { key:'r2', pts:2, label:'Åttedelsfinale' },
+  { key:'r3', pts:3, label:'Kvartfinale' },
+  { key:'r4', pts:4, label:'Semifinale' },
+  { key:'r5', pts:6, label:'Finale' },
+];
+
+function playerTotalPoints(player) {
+  let pts = 0;
+
+  // Group stage
+  GROUP_MATCHES.forEach(m => {
+    const actual = getActual(m.home, m.away);
+    const tip = player.tips[matchKey(m.home, m.away)];
+    const p = calcPoints(tip, actual);
+    if (p !== null) pts += p;
+  });
+
+  // KO: compare player's checked teams vs actual advancing teams
+  const ko = player.koTips || {};
+  KO_ROUNDS_CFG.forEach(({ key, pts: roundPts }) => {
+    const actual = actuals.ko?.[key] || [];
+    if (actual.length === 0) return;
+    const picked = ko[key] || [];
+    picked.forEach(team => {
+      if (actual.map(t=>t.toLowerCase()).includes(team.toLowerCase())) {
+        pts += roundPts;
+      }
+    });
+  });
+
+  return pts;
+}
+
+// ── Group standings computation ────────────────────────────────────
+function computeGroupStandings(group, playerTips) {
+  // playerTips = null for "actual" mode, or player.tips for prediction mode
+  const teams = GROUPS[group];
+  const matches = GROUP_MATCHES.filter(m => m.group === group);
+  const stats = {};
+  teams.forEach(t => stats[t] = {sp:0,w:0,d:0,l:0,gf:0,ga:0});
+
+  matches.forEach(m => {
+    let score;
+    if (playerTips === null) {
+      score = getActual(m.home, m.away);
+    } else {
+      score = playerTips[matchKey(m.home, m.away)] || null;
+    }
+    if (!score) return;
+    const [hg, ag] = score;
+    stats[m.home].sp++; stats[m.away].sp++;
+    stats[m.home].gf += hg; stats[m.home].ga += ag;
+    stats[m.away].gf += ag; stats[m.away].ga += hg;
+    if (hg > ag) { stats[m.home].w++; stats[m.away].l++; }
+    else if (ag > hg) { stats[m.away].w++; stats[m.home].l++; }
+    else { stats[m.home].d++; stats[m.away].d++; }
+  });
+
+  return teams.map(t => ({
+    name: t,
+    sp: stats[t].sp,
+    w: stats[t].w,
+    d: stats[t].d,
+    l: stats[t].l,
+    gf: stats[t].gf,
+    ga: stats[t].ga,
+    gd: stats[t].gf - stats[t].ga,
+    pts: stats[t].w * 3 + stats[t].d
+  })).sort((a, b) =>
+    b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.name.localeCompare(b.name)
+  );
+}
+
+// ── KO bracket resolution ──────────────────────────────────────────
+function getGroupRank(group, rank, playerTips) {
+  const standing = computeGroupStandings(group, playerTips);
+  // Only return team if all 6 matches are filled
+  const matches = GROUP_MATCHES.filter(m => m.group === group);
+  const filled = matches.filter(m => {
+    const score = playerTips === null ? getActual(m.home, m.away) : playerTips[matchKey(m.home, m.away)];
+    return score !== null;
+  });
+  if (filled.length < 6) return null;
+  return standing[rank - 1]?.name || null;
+}
+
+function resolveKoTeams(koIdx) {
+  // Use actual results if available, otherwise return [null, null]
+  if (koIdx < 16) {
+    const pair = R32_PAIRS[koIdx];
+    const a = getGroupRank(pair[0], pair[1], null);
+    const b = getGroupRank(pair[2], pair[3], null);
+    return [a, b];
+  }
+  if (koIdx < 24) {
+    const pi = koIdx - 16;
+    const [ma, mb] = R16_PAIRS[pi];
+    return [getKoWinner(ma-1), getKoWinner(mb-1)];
+  }
+  if (koIdx < 28) {
+    const pi = koIdx - 24;
+    const [ma, mb] = QF_PAIRS[pi];
+    return [getKoWinner(ma-1), getKoWinner(mb-1)];
+  }
+  if (koIdx < 30) {
+    const pi = koIdx - 28;
+    const [ma, mb] = SF_PAIRS[pi];
+    return [getKoWinner(ma-1), getKoWinner(mb-1)];
+  }
+  if (koIdx === 30) return [getKoLoser(28), getKoLoser(29)]; // Bronze
+  if (koIdx === 31) return [getKoWinner(28), getKoWinner(29)]; // Final
+  return [null, null];
+}
+
+function getKoWinner(koIdx) {
+  const [a, b] = resolveKoTeams(koIdx);
+  if (!a || !b) return null;
+  const actual = getActual(a, b);
+  if (!actual) return null;
+  return actual[0] > actual[1] ? a : actual[1] > actual[0] ? b : null;
+}
+function getKoLoser(koIdx) {
+  const [a, b] = resolveKoTeams(koIdx);
+  if (!a || !b) return null;
+  const actual = getActual(a, b);
+  if (!actual) return null;
+  return actual[0] > actual[1] ? b : actual[1] > actual[0] ? a : null;
+}
+
+// ── Render leaderboard ─────────────────────────────────────────────
+function renderLeaderboard() {
+  const lb = document.getElementById('leaderboard');
+  if (players.length === 0) {
+    lb.innerHTML = `<div class="leaderboard-header"><span style="font-size:1.3rem">🏆</span><h2>Ledertavle</h2></div>
+    <div class="empty-state"><div class="emoji">👆</div><h3>Last inn tips-filer</h3><p>Dra inn xlsx-filene fra vennene dine ovenfor</p></div>`;
+    return;
+  }
+
+  const ranked = players.map(p => ({...p, total: playerTotalPoints(p)}))
+    .sort((a,b) => b.total - a.total);
+
+  const actCount = Object.keys(actuals).length;
+  const totalMatches = GROUP_MATCHES.length + KO_MATCHES.length;
+
+  let html = `<div class="leaderboard-header">
+    <span style="font-size:1.3rem">🏆</span><h2>Ledertavle</h2>
+    <span style="margin-left:auto;color:var(--muted);font-size:12px">${actCount} av ${totalMatches} kampresultater lagt inn</span>
+  </div>
+  <div class="lb-row" style="border-bottom:1px solid var(--border);grid-template-columns:44px 1fr repeat(4,64px)">
+    <div></div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Spiller</div>
+    <div style="text-align:center;font-size:11px;color:var(--muted)">Poeng</div>
+    <div style="text-align:center;font-size:11px;color:var(--muted)">3p</div>
+    <div style="text-align:center;font-size:11px;color:var(--muted)">1p</div>
+    <div style="text-align:center;font-size:11px;color:#a78bfa">Sluttspill</div>
+  </div>`;
+
+  ranked.forEach((p, i) => {
+    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1) + '.';
+    let exact = 0, result = 0, koPts = 0;
+    GROUP_MATCHES.forEach(m => {
+      const actual = getActual(m.home, m.away);
+      const tip = p.tips[matchKey(m.home, m.away)];
+      const pts = calcPoints(tip, actual);
+      if (pts === 3) exact++;
+      else if (pts === 1) result++;
+    });
+    KO_ROUNDS_CFG.forEach(({ key, pts: roundPts }) => {
+      const actual = actuals.ko?.[key] || [];
+      const picked = p.koTips?.[key] || [];
+      picked.forEach(team => {
+        if (actual.map(t=>t.toLowerCase()).includes(team.toLowerCase())) koPts += roundPts;
+      });
+    });
+    html += `<div class="lb-row ${rankClass}">
+      <div class="rank-badge">${medal}</div>
+      <div class="lb-name" style="display:flex;align-items:center;gap:8px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${p.color};display:inline-block;flex-shrink:0"></span>
+        ${p.name}
+      </div>
+      <div class="lb-pts">${p.total}</div>
+      <div class="lb-sub" style="color:var(--green)">${exact}</div>
+      <div class="lb-sub" style="color:var(--gold)">${result}</div>
+      <div class="lb-sub" style="color:#a78bfa">${koPts}</div>
+    </div>`;
+  });
+
+  lb.innerHTML = html;
+}
+
+// ── Render result inputs ───────────────────────────────────────────
+function renderResultInputs() {
+  const container = document.getElementById('result-inputs');
+  let html = '';
+
+  // Group stage
+  let curGroup = null;
+  GROUP_MATCHES.forEach(m => {
+    if (m.group !== curGroup) {
+      curGroup = m.group;
+      html += `<div class="section-title">Gruppe ${m.group}</div>`;
+    }
+    const k = matchKey(m.home, m.away);
+    const act = actuals[k] || ['',''];
+    const norClass = m.home === 'Norge' || m.away === 'Norge' ? 'style="background:rgba(245,166,35,.04)"' : '';
+    html += `<div class="result-input-row" ${norClass}>
+      <label><strong>${m.home}</strong> vs <strong>${m.away}</strong>
+        <span style="color:var(--muted);font-size:11px;margin-left:8px">${m.date} ${m.time} · ${m.venue}</span>
+      </label>
+      <div class="score-inputs">
+        <input type="number" min="0" max="30" value="${act[0]}"
+               onchange="saveActual('${m.home}','${m.away}',0,this.value)"
+               placeholder="–">
+        <span>–</span>
+        <input type="number" min="0" max="30" value="${act[1]}"
+               onchange="saveActual('${m.home}','${m.away}',1,this.value)"
+               placeholder="–">
+      </div>
+    </div>`;
+  });
+
+  // KO rounds — enter which teams actually advanced per round
+  html += `<div class="section-title" style="margin-top:32px">Sluttspill – lag som gikk videre</div>`;
+  html += `<p style="color:var(--muted);font-size:12px;margin-bottom:16px">
+    Skriv inn lagnavnene som faktisk gikk videre i hver runde, ett per linje.
+    Bruk samme stavemåte som i tips-filene (norsk). Lagres i nettleseren.
+  </p>`;
+
+  KO_ROUNDS_CFG.forEach(({ key, pts, label }) => {
+    const current = (actuals.ko?.[key] || []).join('\n');
+    html += `<div style="margin-bottom:16px">
+      <label style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;color:var(--text)">
+        ${label} <span style="color:var(--muted);font-weight:400;font-size:11px">(${pts}p per riktig lag)</span>
+      </label>
+      <textarea rows="3" placeholder="Ett lagnavn per linje…"
+        style="width:100%;max-width:420px;background:var(--surface2);border:1px solid var(--border);
+               border-radius:6px;color:var(--text);font-size:13px;padding:8px 10px;
+               outline:none;resize:vertical;font-family:'DM Sans',sans-serif;"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--border)'"
+        onchange="saveKoActual('${key}', this.value)"
+        oninput="saveKoActual('${key}', this.value)"
+      >${current}</textarea>
+    </div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function saveKoActual(round, text) {
+  if (!actuals.ko) actuals.ko = {};
+  const teams = text.split('\n')
+    .map(t => t.trim())
+    .filter(t => t.length > 0);
+  if (teams.length === 0) {
+    delete actuals.ko[round];
+  } else {
+    actuals.ko[round] = teams;
+  }
+  localStorage.setItem('vm2026_actuals', JSON.stringify(actuals));
+  renderLeaderboard();
+}
+
+function saveActual(home, away, idx, val) {
+  const k = matchKey(home, away);
+  if (!actuals[k]) actuals[k] = [null, null];
+  actuals[k][idx] = val === '' ? null : Number(val);
+  if (actuals[k][0] === null && actuals[k][1] === null) delete actuals[k];
+  localStorage.setItem('vm2026_actuals', JSON.stringify(actuals));
+  renderLeaderboard();
+  renderStandings();
+}
+
+// ── Render group standings ─────────────────────────────────────────
+function renderStandings() {
+  const container = document.getElementById('groups-container');
+  if (players.length === 0 && Object.keys(actuals).length === 0) {
+    container.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="emoji">📊</div><h3>Ingen data ennå</h3><p>Last inn tips-filer for å se gruppetabeller</p></div>';
+    return;
+  }
+
+  let html = '';
+  Object.keys(GROUPS).forEach(group => {
+    // Actual standings
+    const actual = computeGroupStandings(group, null);
+    const hasActual = actual.some(t => t.sp > 0);
+
+    html += `<div class="group-card">
+      <div class="group-card-header">GRUPPE ${group} <span>Faktiske resultater</span></div>
+      <div class="standing-hdr"><div>#</div><div>Lag</div><div>Sp</div><div>V</div><div>U</div><div>T</div><div>M+</div><div>M-</div><div>P</div></div>`;
+    actual.forEach((t, i) => {
+      const cls = i === 0 ? 'qualified-1' : i === 1 ? 'qualified-2' : '';
+      html += `<div class="standing-row ${cls}${t.name==='Norge'?' norge-highlight':''}">`+
+        `<div class="pos">${i+1}</div>`+
+        `<div class="sname">${t.name}</div>`+
+        `<div class="snum">${hasActual ? t.sp : '–'}</div>`+
+        `<div class="snum">${hasActual ? t.w : '–'}</div>`+
+        `<div class="snum">${hasActual ? t.d : '–'}</div>`+
+        `<div class="snum">${hasActual ? t.l : '–'}</div>`+
+        `<div class="snum">${hasActual ? t.gf : '–'}</div>`+
+        `<div class="snum">${hasActual ? t.ga : '–'}</div>`+
+        `<div class="spts">${hasActual ? t.pts : '–'}</div>`+
+        `</div>`;
+    });
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+// ── Render match details ───────────────────────────────────────────
+function renderDetails() {
+  const container = document.getElementById('details-container');
+  if (players.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="emoji">📋</div><h3>Ingen spillere lastet</h3><p>Last inn tips-filer for å se detaljer</p></div>';
+    return;
+  }
+
+  let html = '';
+  let curGroup = null;
+
+  GROUP_MATCHES.forEach(m => {
+    if (m.group !== curGroup) {
+      curGroup = m.group;
+      html += `<div class="section-title">Gruppe ${m.group}</div>
+      <table class="match-table">
+        <tr>
+          <th style="width:32px">#</th>
+          <th>Hjemme</th>
+          <th class="center" style="width:90px">Faktisk</th>
+          <th>Borte</th>
+          <th class="center" style="width:70px">Dato</th>
+          <th class="center" style="width:50px">TV</th>
+          <th>Spillertips</th>
+        </tr>`;
+    }
+    const actual = getActual(m.home, m.away);
+    const norCls = m.home === 'Norge' || m.away === 'Norge' ? 'norge-highlight' : '';
+    html += `<tr class="match-row ${norCls}">
+      <td class="match-num">${m.num}</td>
+      <td class="team-name">${m.home}</td>
+      <td class="score-cell score-actual">${actual ? actual[0] + ' – ' + actual[1] : '<span style="color:var(--muted)">–</span>'}</td>
+      <td class="team-name">${m.away}</td>
+      <td class="meta-cell" style="text-align:center">${m.date} ${m.time}</td>
+      <td class="meta-cell" style="text-align:center"><span class="tv-badge ${m.tv==='NRK'?'tv-nrk':'tv-tv2'}">${m.tv}</span></td>
+      <td><div class="player-scores">`;
+
+    players.forEach(p => {
+      const tip = p.tips[matchKey(m.home, m.away)];
+      const pts = calcPoints(tip, actual);
+      if (!tip) return;
+      const ptsClass = pts === null ? 'no-actual' : pts === 3 ? 'pts-3' : pts === 1 ? 'pts-1' : 'pts-0';
+      const ptsLabel = pts !== null ? ` (+${pts}p)` : '';
+      html += `<span class="pscore ${ptsClass}" style="border-color:${p.color}20">
+        <span style="width:7px;height:7px;border-radius:50%;background:${p.color};display:inline-block;margin-right:4px"></span>
+        ${p.name.split(' ')[0]}: ${tip[0]}–${tip[1]}${ptsLabel}</span>`;
+    });
+
+    html += `</div></td></tr>`;
+  });
+  html += '</table>';
+
+  container.innerHTML = html;
+}
+
+// ── Render players bar ─────────────────────────────────────────────
+function renderPlayersBar() {
+  const bar = document.getElementById('players-bar');
+  if (players.length === 0) { bar.innerHTML = ''; return; }
+  bar.innerHTML = players.map((p, i) => `
+    <div class="player-pill">
+      <span class="dot" style="background:${p.color}"></span>
+      ${p.name}
+      <button class="remove" onclick="removePlayer(${i})">×</button>
+    </div>`).join('');
+}
+
+function removePlayer(idx) {
+  players.splice(idx, 1);
+  // Re-assign colors
+  players.forEach((p, i) => p.color = COLORS[i]);
+  renderAll();
+}
+
+function renderAll() {
+  localStorage.setItem('vm2026_players', JSON.stringify(
+    players.map(p => ({name: p.name, color: p.color, tips: p.tips}))
+  ));
+  renderPlayersBar();
+  renderLeaderboard();
+  // Re-render active tab
+  const activeTab = document.querySelector('.tab-content.active')?.id?.replace('tab-','');
+  if (activeTab === 'standings') renderStandings();
+  if (activeTab === 'details') renderDetails();
+  if (activeTab === 'results') renderResultInputs();
+  if (activeTab === 'graph') renderGraph();
+}
+
+
+// ── Fetch results from openfootball (GitHub via jsDelivr CDN) ─────────────
+// jsDelivr mirrors GitHub and sets Access-Control-Allow-Origin: *
+// which allows fetch() from local file:// in Chrome
+const OPENFOOTBALL_URLS = [
+  'https://cdn.jsdelivr.net/gh/openfootball/worldcup.json@master/2026/worldcup.json',
+  'https://api.codetabs.com/v1/proxy?quest=https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json',
+];
+
+const TEAM_MAP = {
+  "South Africa":"Sør-Afrika","South Korea":"Sør-Korea","Switzerland":"Sveits",
+  "Brazil":"Brasil","Morocco":"Marokko","Scotland":"Skottland","Germany":"Tyskland",
+  "Ivory Coast":"Elfenbenskysten","Netherlands":"Nederland","Belgium":"Belgia",
+  "Spain":"Spania","France":"Frankrike","Iraq":"Irak","Norway":"Norge",
+  "Algeria":"Algerie","Austria":"Østerrike","DR Congo":"DR Kongo",
+  "Uzbekistan":"Usbekistan","Croatia":"Kroatia","Cape Verde":"Kapp Verde",
+  "Bosnia and Herzegovina":"Bosnia-Hercegovina","Czechia":"Tsjekkia",
+  "Sweden":"Sverige","New Zealand":"New Zealand","Iran":"Iran","Egypt":"Egypt",
+  "Saudi Arabia":"Saudi Arabia","Uruguay":"Uruguay","Ecuador":"Ecuador",
+  "Tunisia":"Tunisia","Japan":"Japan","Qatar":"Qatar","Canada":"Canada",
+  "USA":"USA","Paraguay":"Paraguay","Australia":"Australia","Haiti":"Haiti",
+  "Ghana":"Ghana","Panama":"Panama","Portugal":"Portugal","Colombia":"Colombia",
+  "Jordan":"Jordan","Argentina":"Argentina","England":"England","Senegal":"Senegal"
+};
+
+function normTeam(name) { return TEAM_MAP[name] || name; }
+
+let isSyncing = false;
+
+async function syncResults() {
+  if (isSyncing) return;
+  isSyncing = true;
+  const btn    = document.getElementById('sync-btn');
+  const status = document.getElementById('sync-status');
+  btn.disabled = true;
+  btn.textContent = '⟳ Henter...';
+  status.textContent = '';
+  status.className = 'sync-status';
+
+  let data = null;
+  let lastErr = null;
+
+  for (const url of OPENFOOTBALL_URLS) {
+    try {
+      const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (resp.ok) { data = await resp.json(); break; }
+    } catch(e) { lastErr = e; }
+  }
+
+  if (!data) {
+    status.textContent = '✗ Kunne ikke hente data. Prøv igjen eller åpne filen via lokal webserver: python3 -m http.server 8080';
+    status.className = 'sync-status err';
+    btn.disabled = false; btn.textContent = '↓ Hent resultater';
+    isSyncing = false;
+    return;
+  }
+
+  let imported = 0;
+  (data.matches || []).forEach(m => {
+    if (!m.score || !m.score.ft) return;
+    const home = normTeam(m.team1);
+    const away = normTeam(m.team2);
+    const [hg, ag] = m.score.ft;
+    if (typeof hg !== 'number' || typeof ag !== 'number') return;
+    const k = home + '|' + away;
+    const existing = actuals[k];
+    if (!existing || existing[0] !== hg || existing[1] !== ag) {
+      actuals[k] = [hg, ag];
+      imported++;
+    }
+  });
+
+  localStorage.setItem('vm2026_actuals', JSON.stringify(actuals));
+  renderAll();
+
+  const total = Object.keys(actuals).filter(k => k !== 'ko').length;
+  status.textContent = `✓ Ferdig! ${imported} nye resultater. Totalt ${total} resultater lagret.`;
+  status.className = 'sync-status ok';
+  btn.disabled = false; btn.textContent = '↓ Hent resultater';
+  isSyncing = false;
+}
+
+
+
+
+
+// ── Graph: points over time ────────────────────────────────────────
+function renderGraph() {
+  const container = document.getElementById('graph-container');
+  if (players.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="emoji">📈</div><h3>Ingen spillere lastet</h3><p>Last inn tips-filer for å se poengutviklingen</p></div>';
+    return;
+  }
+
+  // Build timeline: all matches sorted by date, only those with actual results
+  // Use a sequential match order: group matches in order, then KO in order
+  const timeline = []; // {label, home, away, matchNum}
+
+  GROUP_MATCHES.forEach(m => {
+    const actual = getActual(m.home, m.away);
+    if (actual) timeline.push({
+      label: `${m.date}\n${m.home} v ${m.away}`,
+      short: `${m.home.substring(0,3).toUpperCase()}-${m.away.substring(0,3).toUpperCase()}`,
+      home: m.home, away: m.away
+    });
+  });
+  KO_MATCHES.forEach((km, i) => {
+    const [ta, tb] = resolveKoTeams(i);
+    if (!ta || !tb) return;
+    const actual = getActual(ta, tb);
+    if (actual) timeline.push({
+      label: `${km.date}\n${ta} v ${tb}`,
+      short: `${ta.substring(0,3).toUpperCase()}-${tb.substring(0,3).toUpperCase()}`,
+      home: ta, away: tb
+    });
+  });
+
+  if (timeline.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="emoji">⏳</div><h3>Ingen resultater ennå</h3><p>Legg inn kampresultater for å se poengutviklingen</p></div>';
+    return;
+  }
+
+  // Calculate cumulative points for each player at each point in timeline
+  const series = players.map(p => {
+    let cumPts = 0;
+    const points = [0]; // start at 0 before any match
+    timeline.forEach(t => {
+      const actual = getActual(t.home, t.away);
+      const tip = p.tips[matchKey(t.home, t.away)];
+      const pts = calcPoints(tip, actual);
+      if (pts !== null) cumPts += pts;
+      points.push(cumPts);
+    });
+    return { player: p, points };
+  });
+
+  // SVG dimensions
+  const W = Math.max(700, timeline.length * 28 + 120);
+  const H = 340;
+  const PAD = { top: 20, right: 100, bottom: 60, left: 52 };
+  const gW = W - PAD.left - PAD.right;
+  const gH = H - PAD.top - PAD.bottom;
+
+  const maxPts = Math.max(...series.map(s => Math.max(...s.points)), 10);
+  const steps  = timeline.length;
+
+  function xPos(i) { return PAD.left + (i / steps) * gW; }
+  function yPos(v) { return PAD.top + gH - (v / maxPts) * gH; }
+
+  // Y-axis grid lines
+  const yTicks = [];
+  const yStep = maxPts <= 20 ? 5 : maxPts <= 50 ? 10 : 20;
+  for (let v = 0; v <= maxPts; v += yStep) yTicks.push(v);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
+    style="width:100%;min-width:${Math.min(W,600)}px;font-family:'DM Sans',sans-serif">
+    <defs>
+      <style>
+        .axis { stroke: #2a2a2a; stroke-width: 1; }
+        .grid { stroke: #1f1f1f; stroke-width: 1; stroke-dasharray: 4,4; }
+        .tick-label { fill: #666; font-size: 11px; }
+        .match-label { fill: #444; font-size: 9px; }
+        .end-label { font-size: 11px; font-weight: 600; }
+      </style>
+    </defs>`;
+
+  // Grid lines + Y labels
+  yTicks.forEach(v => {
+    const y = yPos(v);
+    svg += `<line class="grid" x1="${PAD.left}" y1="${y}" x2="${W - PAD.right}" y2="${y}"/>`;
+    svg += `<text class="tick-label" x="${PAD.left - 6}" y="${y + 4}" text-anchor="end">${v}</text>`;
+  });
+
+  // X axis
+  svg += `<line class="axis" x1="${PAD.left}" y1="${yPos(0)}" x2="${W - PAD.right}" y2="${yPos(0)}"/>`;
+
+  // X-axis match labels (every 3rd to avoid clutter)
+  timeline.forEach((t, i) => {
+    const x = xPos(i + 1);
+    if ((i + 1) % Math.max(1, Math.floor(timeline.length / 20)) === 0 || timeline.length <= 20) {
+      svg += `<text class="match-label" x="${x}" y="${H - PAD.bottom + 14}" text-anchor="middle"
+        transform="rotate(-45, ${x}, ${H - PAD.bottom + 14})">${t.short}</text>`;
+    }
+    // Vertical tick
+    svg += `<line class="axis" x1="${x}" y1="${yPos(0)}" x2="${x}" y2="${yPos(0) + 4}"/>`;
+  });
+
+  // Draw lines per player (bottom to top z-order, then endpoints)
+  // First pass: all lines
+  series.forEach(s => {
+    const color = s.player.color;
+    let d = `M ${xPos(0)} ${yPos(0)}`;
+    s.points.forEach((v, i) => { d += ` L ${xPos(i)} ${yPos(v)}`; });
+    svg += `<path d="${d}" stroke="${color}" stroke-width="2.5" fill="none" stroke-linejoin="round" opacity="0.9"/>`;
+  });
+
+  // Second pass: dots at each point
+  series.forEach(s => {
+    const color = s.player.color;
+    s.points.forEach((v, i) => {
+      if (i === 0) return; // skip start
+      const x = xPos(i); const y = yPos(v);
+      svg += `<circle cx="${x}" cy="${y}" r="3" fill="${color}" stroke="var(--bg)" stroke-width="1.5"/>`;
+    });
+  });
+
+  // End labels (sorted by final score to avoid overlap)
+  const finalSorted = [...series].sort((a, b) => {
+    const aFinal = a.points[a.points.length - 1];
+    const bFinal = b.points[b.points.length - 1];
+    return bFinal - aFinal;
+  });
+
+  const endX = xPos(steps);
+  let lastY = -99;
+  finalSorted.forEach(s => {
+    const finalPts = s.points[s.points.length - 1];
+    let y = yPos(finalPts);
+    if (y - lastY < 14) y = lastY + 14; // push down to avoid overlap
+    lastY = y;
+    svg += `<circle cx="${endX}" cy="${yPos(finalPts)}" r="4" fill="${s.player.color}"/>`;
+    svg += `<text class="end-label" x="${endX + 10}" y="${y + 4}" fill="${s.player.color}">${s.player.name.split(' ')[0]}</text>`;
+  });
+
+  svg += '</svg>';
+
+  // Legend
+  let legend = '<div class="graph-legend">';
+  series.forEach(s => {
+    const final = s.points[s.points.length - 1];
+    legend += `<div class="graph-legend-item">
+      <div class="graph-legend-dot" style="background:${s.player.color}"></div>
+      ${s.player.name} <span style="color:var(--muted);margin-left:2px">(${final}p)</span>
+    </div>`;
+  });
+  legend += '</div>';
+
+  container.innerHTML = `
+    <div class="graph-wrap">
+      <h2>📈 Poengutvikling</h2>
+      <p>Kumulativt poengsum etter hvert kampresultat. Kun kamper med registrert resultat vises.</p>
+      <div class="graph-svg-wrap">${svg}</div>
+      ${legend}
+    </div>`;
+}
+
+// ── Export / Import / Clear ────────────────────────────────────────
+function exportData() {
+  const bundle = {
+    version: 1,
+    exported: new Date().toISOString(),
+    actuals: actuals,
+    players: players.map(p => ({name: p.name, color: p.color, tips: p.tips, koTips: p.koTips || {}}))
+  };
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], {type: 'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'VM2026_data_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showSaveStatus('✓ Backup lastet ned');
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const bundle = JSON.parse(e.target.result);
+      if (bundle.version !== 1) throw new Error('Ukjent filformat');
+
+      if (bundle.actuals) {
+        actuals = bundle.actuals;
+        localStorage.setItem('vm2026_actuals', JSON.stringify(actuals));
+      }
+      if (bundle.players) {
+        players = bundle.players.map((p, i) => ({
+          name:   p.name,
+          color:  p.color || COLORS[i],
+          tips:   p.tips   || {},
+          koTips: p.koTips || { r1:[], r2:[], r3:[], r4:[], r5:[] }
+        }));
+      }
+      renderAll();
+      showSaveStatus('✓ Data importert: ' + (bundle.players?.length || 0) + ' spillere, ' + Object.keys(actuals).length + ' resultater');
+    } catch(err) {
+      alert('Kunne ikke lese backup-filen: ' + err.message);
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function clearAllData() {
+  if (!confirm('Slette alle spillerdata og resultater?\nDette kan ikke angres.')) return;
+  players = [];
+  actuals = {};
+  localStorage.removeItem('vm2026_players');
+  localStorage.removeItem('vm2026_actuals');
+  renderAll();
+  showSaveStatus('Alt slettet');
+}
+
+function showSaveStatus(msg) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+
+// ── Summary generator ─────────────────────────────────────────────
+let summaryHistory = JSON.parse(localStorage.getItem('vm2026_summaries') || '[]');
+
+function renderSummary() {
+  const container = document.getElementById('summary-container');
+  const savedKey  = localStorage.getItem('vm2026_claude_key') || '';
+
+  const latest = summaryHistory[summaryHistory.length - 1] || null;
+
+  let historyHtml = '';
+  if (summaryHistory.length > 0) {
+    const items = [...summaryHistory].reverse().slice(0, 5).map((s, i) => `
+      <div class="summary-history-item" onclick="showSavedSummary(${summaryHistory.length-1-i})">
+        <div style="font-size:13px;color:var(--text)">📅 ${s.date}</div>
+        <div class="summary-history-date">${s.matchCount} kamper registrert · ${s.playerCount} spillere</div>
+      </div>`).join('');
+    historyHtml = `
+      <div class="summary-saved">
+        <h4>Tidligere oppsummeringer</h4>
+        ${items}
+      </div>`;
+  }
+
+  container.innerHTML = `
+    <div class="summary-wrap">
+      <div class="summary-controls">
+        <h2>📰 Oppsummering</h2>
+      </div>
+
+      <div class="apikey-row">
+        <label>Claude API-nøkkel:</label>
+        <input type="password" id="claude-key-input"
+          placeholder="sk-ant-..."
+          value="${savedKey}"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border)';saveSummaryKey(this.value)">
+        <span style="font-size:11px;color:var(--muted)">
+          Gratis på <a href="https://console.anthropic.com" target="_blank" style="color:var(--gold)">console.anthropic.com</a>
+        </span>
+      </div>
+
+      <div class="summary-meta" id="summary-meta">
+        ${players.length} spillere lastet · ${Object.keys(actuals).filter(k => k !== 'ko').length} kamper med resultater
+        ${lastExportDate ? ` · Sist kopiert til Claude: <strong style="color:var(--gold)">${lastExportDate}</strong>` : ''}
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+        <button class="summary-btn" onclick="generateSummary(false)">
+          ✨ Generer ny oppsummering
+        </button>
+        <button class="summary-btn secondary" onclick="generateSummary(true)" ${!latest ? 'disabled' : ''}>
+          🔄 Oppdater siden sist
+        </button>
+        <button class="summary-btn" onclick="copyForClaude()"
+          style="background:#6d28d9;border-color:#6d28d9;"
+          title="Kopier data som tekst – lim inn i Claude-chatten for å få oppsummering uten API-nøkkel">
+          📋 Kopier til Claude-chat
+        </button>
+      </div>
+      <div id="copy-claude-status" style="font-size:12px;color:var(--green);margin-top:-12px;margin-bottom:16px;display:none;"></div>
+
+      <div class="summary-output" id="summary-output" style="${latest ? '' : 'display:none'}">
+        ${latest ? latest.text : ''}
+      </div>
+
+      ${historyHtml}
+    </div>`;
+}
+
+function saveSummaryKey(val) {
+  if (val.startsWith('sk-ant-') || val.startsWith('sk-')) {
+    localStorage.setItem('vm2026_claude_key', val);
+  }
+}
+
+function showSavedSummary(idx) {
+  const s = summaryHistory[idx];
+  const out = document.getElementById('summary-output');
+  out.style.display = 'block';
+  out.classList.remove('loading');
+  out.innerHTML = s.text;
+}
+
+async function generateSummary(sinceLastOnly) {
+  const key = document.getElementById('claude-key-input').value.trim();
+  if (!key) {
+    alert('Lim inn Claude API-nøkkelen din øverst. Gratis på console.anthropic.com');
+    return;
+  }
+  localStorage.setItem('vm2026_claude_key', key);
+
+  const btn = document.querySelector('.summary-btn');
+  btn.disabled = true; btn.textContent = '⏳ Genererer...';
+
+  const out = document.getElementById('summary-output');
+  out.style.display = 'block';
+  out.className = 'summary-output loading';
+  out.textContent = 'Analyserer kamper, sjekker tipsene og skriver underholdende norsk VM-journalistikk...';
+
+  try {
+    const prompt = buildSummaryPrompt(sinceLastOnly);
+    // Route through CORS proxy since this HTML runs as a local file
+    const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
+    const ANTH_PROXIES = [
+      url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+      url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      url => `https://proxy.cors.sh/${url}`,
+    ];
+
+    const fetchOpts = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      signal: AbortSignal.timeout(30000)
+    };
+
+    // Try direct first
+    let response = null;
+    let lastErr  = null;
+    try {
+      response = await fetch(ANTHROPIC_URL, fetchOpts);
+    } catch(e) { lastErr = e; }
+
+    // If direct fails, try proxies
+    if (!response || (!response.ok && response.status !== 400 && response.status !== 401)) {
+      for (const makeUrl of ANTH_PROXIES) {
+        try {
+          response = await fetch(makeUrl(ANTHROPIC_URL), {...fetchOpts, referrerPolicy:'no-referrer'});
+          if (response.ok || response.status === 400 || response.status === 401) break;
+        } catch(e) { lastErr = e; response = null; }
+      }
+    }
+    if (!response) throw new Error('Feil: Åpne HTML-filen via lokal server (se sync-panelet). Detaljer: ' + (lastErr?.message || 'ukjent'));
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.content[0].text;
+
+    out.className = 'summary-output';
+    out.innerHTML = text.replace(/\n/g, '<br>');
+
+    // Save to history
+    const entry = {
+      date: new Date().toLocaleString('no-NO', { dateStyle:'short', timeStyle:'short' }),
+      text: out.innerHTML,
+      matchCount: Object.keys(actuals).filter(k => k !== 'ko').length,
+      playerCount: players.length,
+      timestamp: Date.now()
+    };
+    summaryHistory.push(entry);
+    if (summaryHistory.length > 10) summaryHistory.shift();
+    localStorage.setItem('vm2026_summaries', JSON.stringify(summaryHistory));
+
+  } catch(err) {
+    out.className = 'summary-output';
+    out.innerHTML = `<span style="color:var(--accent)">❌ Feil: ${err.message}</span>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '✨ Generer ny oppsummering';
+  }
+}
+
+function buildSummaryPrompt(sinceLastOnly) {
+  // Build full context for Claude
+  const lastSummary = summaryHistory.length > 0 ? summaryHistory[summaryHistory.length-1] : null;
+
+  // Collect all played matches with results + each player's tip + points
+  const playedMatches = [];
+  GROUP_MATCHES.forEach(m => {
+    const actual = getActual(m.home, m.away);
+    if (!actual) return;
+    const [ah, aa] = actual;
+    const playerResults = players.map(p => {
+      const tip = p.tips[matchKey(m.home, m.away)];
+      const pts = calcPoints(tip, actual);
+      return {
+        name: p.name,
+        tip: tip ? `${tip[0]}-${tip[1]}` : '(ingen tips)',
+        pts: pts !== null ? pts : '-'
+      };
+    });
+    playedMatches.push({
+      match: `${m.home} vs ${m.away}`,
+      result: `${ah}-${aa}`,
+      date: m.date,
+      group: m.group,
+      players: playerResults
+    });
+  });
+
+  // Current standings
+  const standings = players.map(p => ({
+    name: p.name,
+    total: playerTotalPoints(p),
+    exact: (() => {
+      let e=0;
+      GROUP_MATCHES.forEach(m => {
+        const a=getActual(m.home,m.away), t=p.tips[matchKey(m.home,m.away)];
+        if(calcPoints(t,a)===3) e++;
+      });
+      return e;
+    })()
+  })).sort((a,b) => b.total-a.total);
+
+  // New matches since last summary
+  const newMatches = sinceLastOnly && lastSummary
+    ? playedMatches.slice(-Math.max(1, playedMatches.length - (lastSummary.matchCount || 0)))
+    : playedMatches;
+
+  const now = new Date().toLocaleDateString('no-NO');
+
+  const prompt = `Du er en underholdende, litt kantete norsk VM-kommentator som skriver ukentlige oppsummeringer for en vennegjeng som tipper kampresultater. Skriv på norsk. Vær morsom, litt sarkastisk, personlig og gjerne litt gemen – men alltid vennlig.
+
+Dato: ${now}
+${sinceLastOnly ? `Fokus: Bare de ${newMatches.length} siste kampene siden forrige oppsummering.` : `Total VM-oppsummering så langt (${playedMatches.length} kamper spilt).`}
+
+=== STILLINGSTABELL ===
+${standings.map((s,i) => `${i+1}. ${s.name}: ${s.total}p (${s.exact} eksakte)`).join('\n')}
+
+=== ${sinceLastOnly ? 'NYE KAMPER SIDEN SIST' : 'ALLE KAMPER'} (${newMatches.length} stk) ===
+${newMatches.slice(-20).map(m => {
+  const winner = m.result.split('-')[0] > m.result.split('-')[1] ? m.match.split(' vs ')[0]
+               : m.result.split('-')[0] < m.result.split('-')[1] ? m.match.split(' vs ')[1] : 'uavgjort';
+  const playerStr = m.players.map(p => `${p.name}: tippa ${p.tip} (${p.pts}p)`).join(', ');
+  return `${m.date} Gr.${m.group}: ${m.match} → ${m.result} | ${playerStr}`;
+}).join('\n')}
+
+=== INSTRUKSJONER ===
+Skriv en morsom oppsummering (ca 300-400 ord) som inneholder:
+1. En catchy intro/overskrift med emojis
+2. Høydepunkter fra kampene – overraskende resultater, svake forsøk på tipping, heldige treff
+3. Hvem som tippet det dummeste / smarteste siden sist. Bruk gjerne formuleringer som "Hvordan i all verden kunne [navn] tippe [resultat] når det endte [faktisk]??" eller "Kudos til [navn] for å tippe [eksakt resultat] – neste gang er det sikkert flaks igjen"
+4. Ledertavle-kommentar: hvem troner på topp, hvem faller, hvem er på vei opp
+5. En avsluttende spådom/stikk til den som leder eller leder det verste tippeselskapet
+
+Bruk IKKE markdown-formatering, bare vanlig tekst med linjeskift og emojis. Max 400 ord.`;
+
+  return prompt;
+}
+
+
+// ── Copy data for Claude chat ──────────────────────────────────────
+// Stores last export timestamp so next summary can show "since last export"
+let lastExportDate = localStorage.getItem('vm2026_last_export') || null;
+
+function copyForClaude() {
+  const now        = new Date();
+  const nowStr     = now.toLocaleString('no-NO', { dateStyle:'short', timeStyle:'short' });
+  const prevExport = lastExportDate;
+
+  // Collect played matches with full tip/points breakdown
+  const playedMatches = [];
+  GROUP_MATCHES.forEach(m => {
+    const actual = getActual(m.home, m.away);
+    if (!actual) return;
+    const [ah, aa] = actual;
+    const playerResults = players.map(p => {
+      const tip = p.tips[matchKey(m.home, m.away)];
+      const pts = calcPoints(tip, actual);
+      return `${p.name}: tippa ${tip ? tip[0]+'-'+tip[1] : '–'} (${pts !== null ? pts+'p' : '–'})`;
+    }).join(' | ');
+    playedMatches.push(
+      `${m.date} Gr.${m.group}: ${m.home} vs ${m.away} → ${ah}-${aa} || ${playerResults}`
+    );
+  });
+
+  // Standings
+  const standings = players.map(p => {
+    let exact = 0, result = 0;
+    GROUP_MATCHES.forEach(m => {
+      const a = getActual(m.home, m.away);
+      const t = p.tips[matchKey(m.home, m.away)];
+      const pts = calcPoints(t, a);
+      if (pts === 3) exact++;
+      else if (pts === 1) result++;
+    });
+    return { name: p.name, total: playerTotalPoints(p), exact, result };
+  }).sort((a,b) => b.total - a.total);
+
+  // New matches since last export
+  const lastCount = parseInt(localStorage.getItem('vm2026_last_export_count') || '0');
+  const newMatches = playedMatches.slice(lastCount);
+
+  const text = [
+    '=== VM 2026 TIPPELIGA – DATA FOR OPPSUMMERING ===',
+    `Eksportert: ${nowStr}`,
+    prevExport ? `Forrige eksport: ${prevExport} (${lastCount} kamper)` : 'Første eksport',
+    '',
+    '--- STILLINGSTABELL ---',
+    ...standings.map((s,i) =>
+      `${i+1}. ${s.name}: ${s.total}p (${s.exact} eksakte, ${s.result} riktig utfall)`
+    ),
+    '',
+    prevExport && newMatches.length > 0
+      ? `--- KAMPER SIDEN SIST (${newMatches.length} stk) ---`
+      : `--- ALLE SPILTE KAMPER (${playedMatches.length} stk) ---`,
+    ...(prevExport && newMatches.length > 0 ? newMatches : playedMatches),
+    '',
+    '--- INSTRUKSJON TIL CLAUDE ---',
+    'Du er en morsom, litt kantete norsk VM-kommentator for en vennegjeng som tipper kampresultater.',
+    'Skriv en oppsummering på norsk (ca 300-400 ord) basert på dataene over.',
+    'Vær personlig, sarkastisk og gjerne litt gemen – men alltid vennlig.',
+    'Fremhev overraskende resultater, dårlige tips, heldige treff og hvem som klatrer/faller på tabellen.',
+    'Bruk navn direkte: "Hvordan kunne [navn] tippe [resultat] når det endte [faktisk]?"',
+    'Avslutt med et stikk til lederen eller den verste tipperen.',
+    'Vanlig tekst med emojis, ikke markdown.',
+  ].join('\n');
+
+  // Copy to clipboard
+  navigator.clipboard.writeText(text).then(() => {
+    // Save export timestamp and match count
+    localStorage.setItem('vm2026_last_export', nowStr);
+    localStorage.setItem('vm2026_last_export_count', String(playedMatches.length));
+    lastExportDate = nowStr;
+
+    // Show confirmation
+    const status = document.getElementById('copy-claude-status');
+    status.textContent = `✓ Kopiert! ${playedMatches.length} kamper, ${players.length} spillere. Lim inn i Claude-chatten.`;
+    status.style.display = 'block';
+    setTimeout(() => { status.style.display = 'none'; }, 5000);
+
+    // Re-render meta to show updated timestamp
+    renderSummary();
+  }).catch(() => {
+    // Fallback: show text in a textarea for manual copy
+    const status = document.getElementById('copy-claude-status');
+    status.innerHTML = '⚠️ Automatisk kopiering feilet. <a href="#" onclick="showCopyFallback()" style="color:var(--gold)">Klikk her</a> for å kopiere manuelt.';
+    status.style.display = 'block';
+    window._claudeCopyText = text;
+  });
+}
+
+function showCopyFallback() {
+  const ta = document.createElement('textarea');
+  ta.value = window._claudeCopyText;
+  ta.style.cssText = 'position:fixed;top:10%;left:5%;width:90%;height:70%;z-index:9999;font-size:12px;padding:12px;background:#1a1a1a;color:#eee;border:2px solid #f5a623;border-radius:8px;';
+  ta.readOnly = true;
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  const close = document.createElement('button');
+  close.textContent = '✕ Lukk';
+  close.style.cssText = 'position:fixed;top:8%;right:6%;z-index:10000;background:var(--accent);color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:600;';
+  close.onclick = () => { document.body.removeChild(ta); document.body.removeChild(close); };
+  document.body.appendChild(close);
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+// Restore players from localStorage
+const savedPlayers = localStorage.getItem('vm2026_players');
+if (savedPlayers) {
+  try {
+    const parsed = JSON.parse(savedPlayers);
+    players = parsed.map((p, i) => ({
+      name: p.name,
+      color: p.color || COLORS[i],
+      tips: p.tips || {}
+    }));
+  } catch(e) { console.warn('Could not restore players:', e); }
+}
+renderAll();
+</script>
+</body>
+</html>
