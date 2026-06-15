@@ -414,16 +414,62 @@ function renderDetails() {
     return;
   }
 
-  let html = '';
-  let curGroup = null;
+  // ── Filter state (default: sortert på tid) ──────────────────────
+  if (typeof window.detailsFilter === 'undefined') window.detailsFilter = 'time';
+  const filter = window.detailsFilter;
 
-  GROUP_MATCHES.forEach(m => {
-    if (m.group !== curGroup) {
-      curGroup = m.group;
-      html += `<div class="section-title">Gruppe ${m.group}</div>
+  // ── Filter dropdown ───────────────────────────────────────────
+  const groupLetters = [...new Set(GROUP_MATCHES.map(m => m.group))];
+  let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <label style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Vis:</label>
+    <select id="details-filter-select" onchange="window.detailsFilter=this.value;renderDetails()"
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);
+             font-size:13px;padding:6px 12px;outline:none;font-family:'DM Sans',sans-serif;cursor:pointer">
+      <option value="time" ${filter==='time'?'selected':''}>📅 Match for match (etter tid)</option>
+      <option value="all" ${filter==='all'?'selected':''}>Alle gruppekamper</option>
+      ${groupLetters.map(g => `<option value="group-${g}" ${filter==='group-'+g?'selected':''}>Gruppe ${g}</option>`).join('')}
+    </select>
+  </div>`;
+
+  // ── Determine matches + ordering ──────────────────────────────
+  const MONTHS = {jan:1,feb:2,mar:3,apr:4,mai:5,jun:6,jul:7,aug:8,sep:9,okt:10,nov:11,des:12};
+  function sortKey(m) {
+    const [day, monAbbr] = m.date.replace('.','').split(' ');
+    const month = MONTHS[monAbbr.toLowerCase()] || 0;
+    const [hh, mm] = m.time.split(':').map(Number);
+    return month * 1e6 + Number(day) * 1e4 + hh * 100 + mm;
+  }
+
+  let matchesToShow;
+  let groupByTime = false;
+
+  if (filter === 'all') {
+    matchesToShow = GROUP_MATCHES;
+  } else if (filter === 'time') {
+    matchesToShow = [...GROUP_MATCHES].sort((a,b) => sortKey(a) - sortKey(b));
+    groupByTime = true;
+  } else {
+    matchesToShow = GROUP_MATCHES.filter(m => 'group-' + m.group === filter);
+  }
+
+  let curGroup = null;
+  let curDate  = null;
+  let tableOpen = false;
+
+  matchesToShow.forEach(m => {
+    const sectionKey = groupByTime ? m.date : m.group;
+    const sectionVal = groupByTime ? curDate : curGroup;
+
+    if (sectionKey !== sectionVal) {
+      if (tableOpen) html += '</table>';
+      if (groupByTime) curDate = m.date; else curGroup = m.group;
+      tableOpen = true;
+      const sectionLabel = groupByTime ? m.date : `Gruppe ${m.group}`;
+      html += `<div class="section-title">${sectionLabel}</div>
       <table class="match-table">
         <tr>
           <th style="width:32px">#</th>
+          ${groupByTime ? '<th style="width:36px">Gr</th>' : ''}
           <th>Hjemme</th>
           <th class="center" style="width:90px">Faktisk</th>
           <th>Borte</th>
@@ -436,6 +482,7 @@ function renderDetails() {
     const norCls = m.home === 'Norge' || m.away === 'Norge' ? 'norge-highlight' : '';
     html += `<tr class="match-row ${norCls}">
       <td class="match-num">${m.num}</td>
+      ${groupByTime ? `<td class="meta-cell" style="text-align:center">${m.group}</td>` : ''}
       <td class="team-name">${m.home}</td>
       <td class="score-cell score-actual">${actual ? actual[0] + ' – ' + actual[1] : '<span style="color:var(--muted)">–</span>'}</td>
       <td class="team-name">${m.away}</td>
@@ -456,7 +503,7 @@ function renderDetails() {
 
     html += `</div></td></tr>`;
   });
-  html += '</table>';
+  if (tableOpen) html += '</table>';
 
   container.innerHTML = html;
 }
