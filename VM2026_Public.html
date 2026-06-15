@@ -133,9 +133,17 @@ main{padding:20px;max-width:1400px;margin:0 auto}
   </div>
 
   <div id="app" style="display:none">
-    <div class="refresh-badge">
-      <span class="refresh-dot"></span>
-      <span id="refresh-info">Oppdateres automatisk hvert 5. minutt</span>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <div class="refresh-badge" style="margin-bottom:0">
+        <span class="refresh-dot"></span>
+        <span id="refresh-info">Oppdateres automatisk hvert 5. minutt</span>
+      </div>
+      <button id="manual-refresh-btn" onclick="manualRefresh()"
+        style="background:var(--accent);color:white;border:none;border-radius:20px;
+               padding:5px 16px;font-size:11px;font-weight:600;cursor:pointer;
+               letter-spacing:.3px;font-family:'DM Sans',sans-serif;">
+        ↓ Hent resultater
+      </button>
     </div>
 
     <div id="tab-dashboard" class="tab-content active">
@@ -212,6 +220,7 @@ const TEAM_MAP = {
 const NOR_TO_EN = {};
 Object.entries(TEAM_MAP).forEach(([en, no]) => { NOR_TO_EN[no] = en; });
 NOR_TO_EN["Tsjekkia"] = "Czech Republic";
+NOR_TO_EN["Bosnia-Hercegovina"] = "Bosnia-Herzegovina"; // TheSportsDB uses hyphenated form, not "Bosnia and Herzegovina"
 function toEnglish(name) { return NOR_TO_EN[name] || name; }
 
 // ── Core functions ─────────────────────────────────────────────────
@@ -781,6 +790,38 @@ async function refresh() {
   if (active === 'standings') renderStandings();
   if (active === 'details')   renderDetails();
   if (active === 'graph')     renderGraph();
+}
+
+// ── Manual refresh button ──────────────────────────────────────────
+async function manualRefresh() {
+  const btn = document.getElementById('manual-refresh-btn');
+  btn.disabled = true;
+  btn.textContent = '⟳ Henter...';
+
+  try {
+    await loadPlayers().then(p => { players = p; });
+    await loadResults();
+
+    const now = new Date().toLocaleString('no-NO', { dateStyle:'short', timeStyle:'short' });
+    document.getElementById('last-updated').innerHTML =
+      `Sist oppdatert: <strong>${now}</strong>`;
+
+    const active = document.querySelector('.tab-content.active')?.id?.replace('tab-','');
+    if (active === 'dashboard') renderLeaderboard();
+    if (active === 'standings') renderStandings();
+    if (active === 'details')   renderDetails();
+    if (active === 'graph')     renderGraph();
+
+    btn.textContent = '✓ Oppdatert';
+  } catch(err) {
+    console.error('Manual refresh error:', err);
+    btn.textContent = '✗ Feil, prøv igjen';
+  } finally {
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = '↓ Hent resultater';
+    }, 2000);
+  }
 }
 
 // ── Init ───────────────────────────────────────────────────────────
